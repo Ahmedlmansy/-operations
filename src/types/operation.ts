@@ -10,6 +10,12 @@ export interface Operation {
   updatedAt: string;
 }
 
+export const isOperationStatus = (value: string): value is OperationStatus =>
+  (OPERATION_STATUSES as readonly string[]).includes(value);
+
+export const isStatusFilter = (value: string | null): value is "All" | OperationStatus =>
+  value === "All" || (value !== null && isOperationStatus(value));
+
 export type StatusFilter = "All" | OperationStatus;
 export type SortField = "createdAt" | "updatedAt";
 export type SortDirection = "asc" | "desc";

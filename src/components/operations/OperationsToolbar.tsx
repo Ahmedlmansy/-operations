@@ -12,6 +12,7 @@ interface Props {
   sortDirection: SortDirection;
   onSortFieldChange: (value: SortField) => void;
   onSortDirectionChange: (value: SortDirection) => void;
+  showClearFilters?: boolean;
 }
 
 export function OperationsToolbar({
@@ -23,6 +24,7 @@ export function OperationsToolbar({
   sortDirection,
   onSortFieldChange,
   onSortDirectionChange,
+  showClearFilters = true,
 }: Props) {
   const searchRef = useRef<HTMLInputElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -195,7 +197,7 @@ export function OperationsToolbar({
             )}
           </div>
 
-          {hasActiveFilters && (
+          {showClearFilters && hasActiveFilters && (
             <button
               type="button"
               className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-300 rounded-lg transition-colors"

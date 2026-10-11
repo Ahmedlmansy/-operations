@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import type { Operation, OperationStatus } from "../../types/operation";
+import {
+  isOperationStatus,
+  type Operation,
+  type OperationStatus,
+} from "../../types/operation";
 import { OPERATION_STATUSES } from "../../types/operation";
 import { formatDate } from "../../utils/operations";
 import { OperationStatusBadge } from "./OperationStatusBadge";
 
 interface Props {
   operation: Operation;
-  onSave: (id: string, status: OperationStatus) => void;
+  onSave: (id: string, status: OperationStatus) => Promise<void>;
   onClose: () => void;
 }
 
@@ -15,6 +19,8 @@ export function OperationDetailsModal({ operation, onSave, onClose }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const [draft, setDraft] = useState<OperationStatus>(operation.status);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -35,9 +41,17 @@ export function OperationDetailsModal({ operation, onSave, onClose }: Props) {
     onClose();
   };
 
-  const handleSave = () => {
-    onSave(operation.id, draft);
-    onClose();
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await onSave(operation.id, draft);
+      onClose();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to update status");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = (event: React.SyntheticEvent<HTMLDialogElement>) => {
@@ -64,7 +78,9 @@ export function OperationDetailsModal({ operation, onSave, onClose }: Props) {
     >
       <div className="modal-content">
         <div className="modal-header">
-          <h2 id="modal-title" className="text-lg font-semibold text-gray-900">Operation Details</h2>
+          <h2 id="modal-title" className="text-lg font-semibold text-gray-900">
+            Operation Details
+          </h2>
           <button
             type="button"
             className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
@@ -105,15 +121,29 @@ export function OperationDetailsModal({ operation, onSave, onClose }: Props) {
             <select
               id="modal-status"
               value={draft}
-              onChange={(e) => setDraft(e.target.value as OperationStatus)}
-              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+              onChange={(e) => {
+                const next = e.target.value;
+                if (isOperationStatus(next)) {
+                  setDraft(next);
+                }
+              }}
+              disabled={saving}
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow disabled:opacity-50"
               aria-label="Select new status"
             >
               {OPERATION_STATUSES.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>
+                  {s}
+                </option>
               ))}
             </select>
           </div>
+
+          {saveError && (
+            <p className="text-sm text-red-600" role="alert">
+              {saveError}
+            </p>
+          )}
         </div>
 
         <div className="modal-footer flex justify-end gap-3 pt-4 border-t border-gray-200">
@@ -121,16 +151,17 @@ export function OperationDetailsModal({ operation, onSave, onClose }: Props) {
             type="button"
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             onClick={handleClose}
+            disabled={saving}
           >
             Cancel
           </button>
           <button
             type="button"
-            disabled={!dirty}
+            disabled={!dirty || saving}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            onClick={handleSave}
+            onClick={() => void handleSave()}
           >
-            Save Changes
+            {saving ? "Saving…" : "Save Changes"}
           </button>
         </div>
       </div>
