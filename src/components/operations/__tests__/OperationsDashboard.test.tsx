@@ -1,4 +1,4 @@
-﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OperationsDashboardContent } from "../OperationsDashboardContent";
@@ -498,5 +498,17 @@ describe("OperationsDashboard", () => {
     });
     expect(screen.getByLabelText("Search operations")).toHaveValue("");
     expect(screen.getByText("No operations yet")).toBeInTheDocument();
+  });
+
+  it("changes page size and updates the table and pagination controls", async () => {
+    const user = setupUser();
+    await renderReady();
+
+    const pageSizeSelect = screen.getByLabelText("Rows per page");
+    expect(pageSizeSelect).toHaveValue("50");
+
+    await user.selectOptions(pageSizeSelect, "10");
+    expect(pageSizeSelect).toHaveValue("10");
+    expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
   });
 });

@@ -9,6 +9,7 @@ import { OperationsEmptyState } from "./OperationsEmptyState";
 import { OperationsLoading } from "./OperationsLoading";
 import { OperationsError } from "./OperationsError";
 import type { Operation, OperationStatus } from "../../types/operation";
+import { PAGE_SIZE_OPTIONS, type PageSize } from "../../hooks/useOperationsView";
 
 const EMPTY_STATS = { Total: 0, Pending: 0, Running: 0, Completed: 0, Failed: 0 };
 
@@ -34,6 +35,8 @@ export function OperationsDashboardContent() {
     setSortDirection,
     currentPage,
     setCurrentPage,
+    pageSize,
+    setPageSize,
     selectedOperation,
     selectOperation,
     clearSelection,
@@ -81,7 +84,6 @@ export function OperationsDashboardContent() {
 
   const displayStats = stats ?? EMPTY_STATS;
   const showEmpty = status === "success" && total === 0;
-  const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPageNumber = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (currentPageNumber - 1) * pageSize;
@@ -166,15 +168,33 @@ export function OperationsDashboardContent() {
           ) : (
             <>
               <OperationsTable operations={paginatedOperations} onView={handleView} />
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between gap-3 border-t border-gray-200 px-4 py-3">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="page-size-select" className="text-sm text-gray-500 whitespace-nowrap">
+                    Rows per page:
+                  </label>
+                  <select
+                    id="page-size-select"
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value) as PageSize)}
+                    className="px-2.5 py-1 text-sm bg-white border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    aria-label="Rows per page"
+                  >
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-4">
                   <p className="text-sm text-gray-500">
                     Page {currentPageNumber} of {totalPages}
                   </p>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-400"
+                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-400 transition-colors"
                       disabled={currentPageNumber === 1}
                       onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                     >
@@ -182,7 +202,7 @@ export function OperationsDashboardContent() {
                     </button>
                     <button
                       type="button"
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-400"
+                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-400 transition-colors"
                       disabled={currentPageNumber === totalPages}
                       onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                     >
@@ -190,7 +210,7 @@ export function OperationsDashboardContent() {
                     </button>
                   </div>
                 </div>
-              )}
+              </div>
             </>
           )}
         </div>
